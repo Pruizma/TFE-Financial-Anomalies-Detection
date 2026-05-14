@@ -1,4 +1,5 @@
-#TFE: Financial Anomalies Detection 📈🤖
+# TFE: Financial Anomalies Detection 📈🤖
+
 This repository contains the source code and experimental pipeline for the Master's Thesis: "Intelligent System for Early Detection of Financial Anomalies using Unsupervised Learning".
 
 Financial markets are highly dynamic environments characterized by volatility clustering and extreme events (fat tails), such as Flash Crashes. Traditional statistical risk models, which often assume normal data distributions, fail to accurately predict or identify these complex structural anomalies.
@@ -7,11 +8,11 @@ To address this challenge, this project develops an automated early-warning syst
 
 Following the CRISP-DM methodology, the technical architecture presents a rigorous comparative analysis across three stages:
 
-1. Statistical Baseline: Traditional parametric methods (e.g., moving Z-Score) to establish a performance threshold.
+1.  Statistical Baseline: Traditional parametric methods (e.g., moving Z-Score) to establish a performance threshold.
 
-2. Classical Machine Learning: Isolation Forest and Local Outlier Factor (LOF) for spatial isolation and local density-based anomaly detection.
+2.  Classical Machine Learning: Isolation Forest and Local Outlier Factor (LOF) for spatial isolation and local density-based anomaly detection.
 
-3. Deep Learning: LSTM-Autoencoders designed to capture temporal dependencies and detect market crashes through reconstruction error thresholds.
+3.  Deep Learning: LSTM-Autoencoders designed to capture temporal dependencies and detect market crashes through reconstruction error thresholds.
 
 The ultimate goal of this project is to provide a robust, explainable tool to mitigate financial risks and optimize decision-making.
 
