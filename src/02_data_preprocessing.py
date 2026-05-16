@@ -111,9 +111,9 @@ def calculate_returns(df, price_col='Close'):
     # Retornos acumulados
     df['Returns_Cumulative'] = (1 + df['Returns_Simple']).cumprod() - 1
     
-    print("  - Retornos simples: ✓")
-    print("  - Retornos logarítmicos: ✓")
-    print("  - Retornos acumulados: ✓")
+    print("  - Retornos simples: [OK]")
+    print("  - Retornos logarítmicos: [OK]")
+    print("  - Retornos acumulados: [OK]")
     
     return df
 
@@ -187,11 +187,11 @@ def calculate_technical_indicators(df, price_col='Close', high_col='High', low_c
     true_range = np.max(ranges, axis=1)
     df['ATR'] = true_range.rolling(window=14).mean()
     
-    print("  - Medias móviles: ✓")
-    print("  - RSI: ✓")
-    print("  - MACD: ✓")
-    print("  - Bandas de Bollinger: ✓")
-    print("  - ATR: ✓")
+    print("  - Medias móviles: [OK]")
+    print("  - RSI: [OK]")
+    print("  - MACD: [OK]")
+    print("  - Bandas de Bollinger: [OK]")
+    print("  - ATR: [OK]")
     
     return df
 
