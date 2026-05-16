@@ -30,9 +30,22 @@ def load_raw_data(file_path):
     print(f"[INFO] Cargando datos desde: {file_path}")
     
     try:
-        df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+        # Cargar CSV ignorando las primeras filas con datos de ticker
+        df = pd.read_csv(file_path, index_col=0, parse_dates=True, skiprows=[1, 2])
+        
+        # Limpiar nombres de columnas (quitar espacios y carácter especial ^)
+        df.columns = df.columns.str.strip().str.replace('^', '', regex=False)
+        
+        print(f"[INFO] Columnas detectadas: {list(df.columns)}")
+        
+        # Convertir todas las columnas a numéricas excepto el índice
+        for col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+        
         print(f"[INFO] Datos cargados: {df.shape[0]} filas, {df.shape[1]} columnas")
         print(f"[INFO] Rango de fechas: {df.index[0]} a {df.index[-1]}")
+        print(f"[INFO] Tipos de datos: {df.dtypes.to_dict()}")
+        
         return df
     except Exception as e:
         print(f"[ERROR] No se pudieron cargar los datos: {e}")
