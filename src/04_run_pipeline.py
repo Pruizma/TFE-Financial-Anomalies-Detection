@@ -234,7 +234,7 @@ def run_lof(X_train, X_test, y_train, y_test):
     return results
 
 
-def run_lstm_autoencoder(X_train_seq, X_test_seq, y_train, y_test):
+def run_lstm_autoencoder(X_train_seq, X_test_seq, y_train, y_test, timesteps=30):
     """Ejecuta el modelo LSTM Autoencoder."""
     print("\n" + "=" * 70)
     print("4. LSTM AUTOENCODER")
@@ -246,6 +246,10 @@ def run_lstm_autoencoder(X_train_seq, X_test_seq, y_train, y_test):
     
     timesteps = X_train_seq.shape[1]
     n_features = X_train_seq.shape[2]
+    
+    # Ajustar y_train a la longitud de las secuencias (se pierden timesteps-1 muestras)
+    y_train_seq = y_train[timesteps-1:timesteps-1+len(X_train_seq)]
+    y_test_seq = y_test[timesteps-1:timesteps-1+len(X_test_seq)]
     
     # Dividir training para validación
     split_val = int(len(X_train_seq) * 0.8)
@@ -264,10 +268,17 @@ def run_lstm_autoencoder(X_train_seq, X_test_seq, y_train, y_test):
     y_pred = model.predict(X_test_seq)
     scores = model.decision_function(X_test_seq)
     
-    # Ajustar y_test a la longitud de las secuencias
-    y_test_adj = y_test[timesteps-1:timesteps-1+len(y_pred)]
+    # Verificar que las longitudes coinciden
+    print(f"[INFO] y_test_seq: {len(y_test_seq)}, y_pred: {len(y_pred)}")
     
-    results = evaluate_model(y_test_adj, y_pred, scores, "LSTM Autoencoder")
+    if len(y_test_seq) != len(y_pred):
+        print(f"[WARNING] Longitudes no coinciden, ajustando...")
+        min_len = min(len(y_test_seq), len(y_pred))
+        y_test_seq = y_test_seq[:min_len]
+        y_pred = y_pred[:min_len]
+        scores = scores[:min_len]
+    
+    results = evaluate_model(y_test_seq, y_pred, scores, "LSTM Autoencoder")
     
     # Guardar modelo
     model.save('models/lstm_autoencoder.keras')
