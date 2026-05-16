@@ -39,23 +39,30 @@ class StatisticalBaseline:
     def __init__(self, window=20, threshold=3.0):
         self.window = window
         self.threshold = threshold
-        self.mean = None
-        self.std = None
+        self.global_mean = None
+        self.global_std = None
         
     def fit(self, X):
-        """Calcula estadísticas móviles."""
-        df = pd.DataFrame(X)
-        self.mean = df.rolling(window=self.window, min_periods=1).mean()
-        self.std = df.rolling(window=self.window, min_periods=1).std()
+        """Calcula estadísticas globales del training set."""
+        self.global_mean = np.mean(X, axis=0)
+        self.global_std = np.std(X, axis=0)
         return self
         
     def predict(self, X):
         """
-        Detecta anomalías basándose en Z-Score.
+        Detecta anomalías basándose en Z-Score con ventana móvil.
         Retorna: 1 para normal, -1 para anomalía
         """
         df = pd.DataFrame(X)
-        z_score = np.abs((df - self.mean) / (self.std + 1e-10))
+        
+        # Calcular media y std móviles para los datos de entrada
+        rolling_mean = df.rolling(window=self.window, min_periods=1).mean()
+        rolling_std = df.rolling(window=self.window, min_periods=1).std()
+        
+        # Evitar división por cero
+        rolling_std = rolling_std.replace(0, 1e-10)
+        
+        z_score = np.abs((df - rolling_mean) / rolling_std)
         
         # Una anomalía si cualquier feature excede el umbral
         anomalies = (z_score > self.threshold).any(axis=1).astype(int)
@@ -64,7 +71,11 @@ class StatisticalBaseline:
     def decision_function(self, X):
         """Retorna scores de anomalía (mayor = más anómalo)."""
         df = pd.DataFrame(X)
-        z_score = np.abs((df - self.mean) / (self.std + 1e-10))
+        rolling_mean = df.rolling(window=self.window, min_periods=1).mean()
+        rolling_std = df.rolling(window=self.window, min_periods=1).std()
+        rolling_std = rolling_std.replace(0, 1e-10)
+        
+        z_score = np.abs((df - rolling_mean) / rolling_std)
         return z_score.max(axis=1).values
 
 
