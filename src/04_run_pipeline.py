@@ -109,12 +109,15 @@ def load_processed_data(data_dir='data/processed'):
             print("[WARNING] No se encontraron secuencias para LSTM")
             data['X_seq'] = None
     
-    # Cargar nombres de features
-    features_path = os.path.join(data_dir, 'feature_names.csv')
-    if os.path.exists(features_path):
-        df_features = pd.read_csv(features_path)
+# Cargar nombres de features (buscando el archivo con fecha)
+    feature_name_files = [f for f in files_in_dir if f.startswith('feature_names_') and f.endswith('.csv')]
+    if feature_name_files:
+        most_recent_fn = sorted(feature_name_files)[-1]
+        df_features = pd.read_csv(os.path.join(data_dir, most_recent_fn))
         data['feature_names'] = df_features['features'].tolist()
-        print(f"[OK] {len(data['feature_names'])} feature names cargados")
+        print(f"[OK] {len(data['feature_names'])} feature names cargados ({most_recent_fn})")
+    else:
+        print("[WARNING] No se encontró el archivo de nombres de características")
     
     # Cargar DataFrame original (último archivo features)
     csv_feature_files = [f for f in files_in_dir if f.startswith('features_df_') and f.endswith('.csv')]
@@ -126,27 +129,36 @@ def load_processed_data(data_dir='data/processed'):
     return data
 
 
-def create_synthetic_anomalies(X, contamination=0.05):
+def create_historical_labels(df):
     """
-    Crea anomalías sintéticas si no hay etiquetas reales disponibles.
+    Crea etiquetas basadas en eventos históricos de caídas extremas reales del S&P 500.
+    Utiliza el índice del DataFrame (fechas) para marcar periodos de crisis (Ground Truth).
+    """
+    print("\n[INFO] Generando etiquetas basadas en histórico real del mercado...")
+    y_true = np.ones(len(df)) # 1 = normal por defecto
+    dates = df.index
     
-    Args:
-        X: Datos de entrada
-        contamination: Porcentaje de anomalías a crear
+    # Definimos los grandes periodos de crisis reales en ese rango (2016-2026)
+    anomaly_masks = [
+        # 1. Crash del COVID-19 (Feb-Mar 2020)
+        (dates >= '2020-02-20') & (dates <= '2020-03-31'),
         
-    Returns:
-        y_true: Etiquetas sintéticas (1: normal, -1: anomalía)
-    """
-    np.random.seed(42)
-    n_samples = len(X)
-    n_anomalies = int(n_samples * contamination)
+        # 2. Fuerte corrección de tipos de interés (Dic 2018)
+        (dates >= '2018-12-01') & (dates <= '2018-12-31'),
+        
+        # 3. Estallido de la guerra de Ucrania e Inflación (Caídas fuertes de 2022)
+        (dates >= '2022-04-01') & (dates <= '2022-06-30'),
+
+        # 4. Corrección tecnológica y "Carry Trade" de Japón (Julio-Agosto 2024)
+        (dates >= '2024-07-25') & (dates <= '2024-08-15')
+    ]
     
-    # Seleccionar índices aleatorios como anomalías
-    anomaly_indices = np.random.choice(n_samples, n_anomalies, replace=False)
-    y_true = np.ones(n_samples)
-    y_true[anomaly_indices] = -1
-    
-    print(f"\n[INFO] Anomalías sintéticas creadas: {n_anomalies} ({contamination*100:.1f}%)")
+    # Aplicar las máscaras para marcar como anomalía (-1)
+    for mask in anomaly_masks:
+        y_true[mask] = -1
+        
+    n_anomalies = np.sum(y_true == -1)
+    print(f"  - Días anómalos reales marcados: {n_anomalies} ({(n_anomalies/len(df))*100:.1f}%)")
     
     return y_true.astype(int)
 
@@ -377,7 +389,7 @@ Se evaluaron 4 modelos de detección de anomalías:
     report += "- LOF: Sensibles a dimensión alta, requiere tuning de vecinos\n"
     report += "- LSTM: Capturan patrones temporales pero requieren más datos y computación\n"
     
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w', encoding='utf-8') as f:
         f.write(report)
     
     print(f"\n[OK] Informe Markdown guardado en: {output_path}")
@@ -400,9 +412,11 @@ def main():
     
     X = data['X']
     X_seq = data.get('X_seq')
+    df_dates = data['df'] 
     
-    # 2. Crear etiquetas sintéticas (o cargar si existen reales)
-    y = create_synthetic_anomalies(X, contamination=0.05)
+    # 2. Crear etiquetas y alinear longitudes
+    y_full = create_historical_labels(df_dates)
+    y = y_full[-len(X):]  # Recortamos los primeros días (NaNs) para que coincida exacto con X
     
     # 3. Dividir train/test temporalmente
     X_train, X_test, y_train, y_test = split_train_test(X, y, test_size=0.2)

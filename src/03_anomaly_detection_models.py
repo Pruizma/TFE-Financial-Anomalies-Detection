@@ -107,7 +107,7 @@ class AnomalyDetectorIF:
         
     def decision_function(self, X):
         """Retorna scores de anomalía (más negativo = más anómalo)."""
-        return self.model.decision_function(X)
+        return -self.model.decision_function(X)
         
     def save(self, filepath):
         """Guarda el modelo entrenado."""
