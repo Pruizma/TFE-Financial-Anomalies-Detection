@@ -34,7 +34,7 @@ La evaluación empírica demostró que los algoritmos de aislamiento espacial (*
 
 1. **Clonar el repositorio:**
 ```bash
-git clone https://github.com/Pruizma/TFE-Fnancial-Anomalies-Detection.git
+git clone https://github.com/Pruizma/TFE-Financial-Anomalies-Detection.git
 cd TFE-Fnancial-Anomalies-Detection
 ```
 
